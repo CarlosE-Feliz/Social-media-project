@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { User } from '../models';
 import { CreatedAt } from 'sequelize-typescript';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../helpers/configJwt';
 
 interface RegisterRequest extends Request {
     body: {
@@ -10,9 +12,8 @@ interface RegisterRequest extends Request {
         email?: string;
         fullname?: string;
         bio?: string;
-        profilePicUrl?: string; // Optional field for profile picture URL
-        createdAt?: Date; // Optional field for registration date
-        // etc.
+        profilePicUrl?: string;
+        createdAt?: Date;
     };
 }
 
@@ -34,6 +35,7 @@ interface RegisterResponseBody {
         fullname: string;
     };
     error?: string;
+    token?: string;
 }
 
 interface RegisterResponse extends Response {
@@ -106,6 +108,10 @@ export class UserController {
                 return
             }
 
+            const token = jwt.sign({id:user.id, email:user.email},
+                JWT_SECRET,{expiresIn: '24h'}
+            );
+
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
@@ -114,7 +120,8 @@ export class UserController {
                     username: user.username,
                     email: user.email,
                     fullname: user.fullname
-                }
+                }, 
+                token
             });
         }catch(error){
             console.error ('Login error:', error);
@@ -139,7 +146,7 @@ export class UserController {
             const users = await User.findAll({
                 attributes: ['id', 'username', 'email', 'fullname', 'createdAt'], // Only return safe fields
                 order: [['createdAt', 'DESC']] // Sort by newest first
-            }).then(res => {
+            }).then((res: any) => {
                 console.log(res);
                 return res
             })
@@ -156,6 +163,20 @@ export class UserController {
                 message: 'Error fetching users',
                 error: error instanceof Error ? error.message : 'Unknown error'
             });
+        }
+    }
+
+    static async getMe(req: any, res: any){
+        try{
+            const userId = req.user.id;
+            const user = await User.findByPk(userId);
+            if(!user){
+                return res.status(404).json({message: 'No user provided'});
+            }
+
+            res.json({message: "Klk", user});
+        }catch (error) {
+            res.status(500).json({ message: 'Error del servidor' });
         }
     }
 }

@@ -31,6 +31,10 @@ User.init({
     porfPrctUrl: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true
+    },
+    fullname: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true
     }
 }, {
     sequelize: database_1.sequelize,

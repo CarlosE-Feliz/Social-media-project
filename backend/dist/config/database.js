@@ -29,9 +29,10 @@ exports.sequelize = new sequelize_1.Sequelize({
 const connectDatabase = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield exports.sequelize.authenticate();
+        console.log('Connecting to database from:', new Error().stack);
         console.log('✅ Database connection established');
         // Add sync to create tables
-        yield exports.sequelize.sync({ alter: true });
+        yield exports.sequelize.sync();
         console.log('✅ Database tables synchronized');
     }
     catch (error) {
