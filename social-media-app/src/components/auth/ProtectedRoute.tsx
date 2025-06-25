@@ -1,16 +1,18 @@
+import { useContext } from "react";
+import { AuthContext } from "../../hooks/useAuth";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const auth = useContext(AuthContext);
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
+  if (!auth) {
     return <Navigate to="/login" replace />;
   }
+
+  const { isAuthenticated, loading } = auth;
+  if (loading) return <div>Cargando...</div>; // O un spinner
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return <>{children}</>;
 }
