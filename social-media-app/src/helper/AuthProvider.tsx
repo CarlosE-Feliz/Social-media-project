@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../hooks/useAuth";
 
@@ -14,7 +14,40 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token")
+  );
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Recupera el usuario si hay token al cargar la app
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (token && !user) {
+        try {
+          const response = await fetch("http://localhost:5000/api/users/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem("token");
+          }
+        } catch {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem("token");
+        }
+      }
+      setLoading(false);
+    };
+    fetchUser();
+  }, [token, user]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -33,6 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const data = await response.json();
       setUser(data.user);
+      setToken(data.token);
       localStorage.setItem("token", data.token);
       navigate("/");
     } catch (error) {
@@ -43,6 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem("token");
     navigate("/login");
   };
@@ -69,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const data = await response.json();
       setUser(data.user);
+      setToken(data.token);
       localStorage.setItem("token", data.token);
       navigate("/");
     } catch (error) {
@@ -79,7 +115,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, register, isAuthenticated: !!user }}
+      value={{
+        user,
+        login,
+        logout,
+        register,
+        isAuthenticated: !!user,
+        token,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
