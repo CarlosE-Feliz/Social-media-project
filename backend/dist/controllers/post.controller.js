@@ -11,9 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostController = void 0;
 const models_1 = require("../models");
+const response201_1 = require("../helpers/response201");
 class PostController {
     static createPost(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
             try {
                 const { caption, imageUrl, fullname, userId } = req.body;
                 // Validate user field
@@ -42,7 +44,14 @@ class PostController {
                 res.status(201).json({
                     success: true,
                     message: 'Post created successfully',
-                    post: newPost
+                    post: [{
+                            id: newPost.id,
+                            caption: (_a = newPost.caption) !== null && _a !== void 0 ? _a : '',
+                            imageUrl: (_b = newPost.imageUrl) !== null && _b !== void 0 ? _b : '',
+                            fullname: (_c = newPost.fullname) !== null && _c !== void 0 ? _c : '',
+                            userId: newPost.userId,
+                            createdAt: newPost.createdAt
+                        }]
                 });
             }
             catch (error) {
@@ -92,9 +101,15 @@ class PostController {
     }
     static getAllPosts(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Logic for creating a post
-            if (req) {
-                res.status(201).send({ message: 'All post fetched', post: req.body });
+            try {
+                const posts = yield models_1.Post.findAll({
+                    attributes: ['id', 'caption', 'imageUrl', 'fullname', 'userId'],
+                    order: [['createdAt', 'DESC']]
+                });
+                (0, response201_1.created)(res, 'All post fetched', { posts });
+            }
+            catch (error) {
+                console.error('Error fetching posts', error);
             }
         });
     }

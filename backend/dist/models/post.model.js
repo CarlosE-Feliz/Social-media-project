@@ -33,10 +33,6 @@ Post.init({
     userId: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'Users', // table name as string
-            key: 'id',
-        },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
     },
